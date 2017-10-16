@@ -12,7 +12,7 @@ class Conf
  const DEF_APP = 'Test Application';
 
  const DB_HOST = 'localhost';
- const DB_NAME   = 'forge';
+ const DB_NAME   = 'moviedatabase';
  const DB_USERNAME = 'davidcurbina';
  const DB_PASSWORD = 'password';
 

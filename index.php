@@ -103,10 +103,6 @@
                         $password = "admin";
                         $database = "moviedatabase";
 
-                        //ini_set('display_errors', 1);
-                        //ini_set('display_startup_errors', 1);
-                        //error_reporting(E_ALL);
-
                         // Create connection
                         $mysqli = new mysqli($servername, $username, $password,$database);
                         mysqli_set_charset( $mysqli, 'utf8');

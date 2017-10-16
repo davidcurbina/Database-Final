@@ -23,13 +23,13 @@
 </script>
 <?php
     $servername = "localhost:8889";
-    $username = "davidcurbina";
-    $password = "Jackass2.";
+    $username = "admin";
+    $password = "admin";
     $database = "moviedatabase";
 
-    //ini_set('display_errors', 1);
-    //ini_set('display_startup_errors', 1);
-    //error_reporting(E_ALL);
+    ini_set('display_errors', 1);
+    ini_set('display_startup_errors', 1);
+    error_reporting(E_ALL);
 
     // Create connection
     $mysqli = new mysqli($servername, $username, $password,$database);
