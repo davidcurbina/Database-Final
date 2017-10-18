@@ -198,3 +198,98 @@ LOAD DATA LOCAL INFILE "/Users/davidurbina/Documents/Development/dbFinal/Rotten 
 INTO TABLE user_taggedmovies_timestamp
 FIELDS terminated by '\t' lines terminated BY '\n' 
 IGNORE 1 LINES; 
+
+DELIMITER $$
+CREATE PROCEDURE `GetResults`(IN `QType` VARCHAR(50), IN `QLimit` INT, IN `Term` VARCHAR(50), IN `Qmin` INT)
+BEGIN
+	IF(QType = "popular") THEN
+		SELECT m.title as 'Title', m.mvYear as 'Year', m.rtAudienceScore as 'Audience Score', m.rtPictureURL as 'RTPic', m.imdbPictureURL as 'IMDBPic', directorName
+		FROM movie_directors md, movies m
+        Where md.movieID = m.id
+		ORDER BY m.rtAudienceScore Desc
+		Limit QLimit;
+	ELSEIF(QType = "title") THEN
+		SELECT distinct m.title as 'Title', m.mvYear as 'Year', m.rtAudienceScore as 'Audience Score', m.rtPictureURL as 'RTPic', m.imdbPictureURL as 'IMDBPic', directorName
+		FROM movie_directors md, movies m
+        Where md.movieID = m.id
+        And lower(m.title) like lower(CONCAT('%', Term, '%'))
+        Limit QLimit;
+	ELSEIF(QType = "actor") THEN
+		SELECT distinct m.title as 'Title', m.mvYear as 'Year', m.rtAudienceScore as 'Audience Score', m.rtPictureURL as 'RTPic', m.imdbPictureURL as 'IMDBPic', ma.actorName
+		FROM movie_actors ma, movies m
+        Where ma.movieID = m.id
+        And lower(ma.actorName) like lower(CONCAT('%', Term, '%'))
+        Limit QLimit;
+	ELSEIF(QType = "director") THEN
+		SELECT distinct m.title as 'Title', m.mvYear as 'Year', m.rtAudienceScore as 'Audience Score', m.rtPictureURL as 'RTPic', m.imdbPictureURL as 'IMDBPic', directorName
+		FROM movie_directors md, movies m
+        Where md.movieID = m.id
+        And lower(md.directorName) like lower(CONCAT('%', Term, '%'))
+        Limit QLimit;
+	ELSEIF(QType = "tags") THEN
+        SELECT mvValue tag
+		FROM movie_tags mt, movies m, tags t
+		WHERE mt.movieID = m.id
+        AND t.id = mt.tagID
+		AND m.title = Term;
+	ELSEIF(QType = "tag") THEN
+        SELECT distinct m.title as 'Title', m.mvYear as 'Year', m.rtAudienceScore as 'Audience Score', m.rtPictureURL as 'RTPic', m.imdbPictureURL as 'IMDBPic', directorName
+		FROM movie_tags mt, movies m, tags t,movie_directors md
+        Where md.movieID = m.id
+		AND mt.movieID = m.id
+        AND t.id = mt.tagID
+		AND t.mvValue like lower(CONCAT('%', Term, '%'))
+        ORDER BY m.rtAudienceScore Desc
+        Limit QLimit;
+	ELSEIF(QType="genre") THEN
+		SELECT distinct m.title as 'Title', m.mvYear as 'Year', m.rtAudienceScore as 'Audience Score', m.rtPictureURL as 'RTPic', m.imdbPictureURL as 'IMDBPic'
+		FROM movies m, movie_genres mg
+		WHERE m.id = mg.movieID
+		AND mg.genre like lower(CONCAT('%', Term, '%'))
+        ORDER BY m.rtAudienceScore Desc
+		Limit QLimit;
+    ELSEIF(QType="directors") THEN
+        SELECT directorName as 'DirectorName', AVG(m.rtAudienceScore) as 'Avg'
+        FROM movie_directors md, movies m
+                  WHERE md.movieID = m.id
+        GROUP BY directorName HAVING Count(*)>Qmin
+        ORDER BY m.rtAudienceScore Desc
+        Limit QLimit;
+    ELSEIF(QType="actors") THEN
+        SELECT actorName as 'ActorName', AVG(m.rtAudienceScore) as 'Avg'
+        FROM movie_actors ma, movies m
+                  WHERE ma.movieID = m.id
+        GROUP BY actorName HAVING Count(*)>Qmin
+        ORDER BY AVG(m.rtAudienceScore) Desc
+        Limit QLimit;
+    ELSEIF(QType="summary") THEN
+        SELECT mg.genre, count(mg.genre)/(SELECT COUNT(*) From user_ratedmovies ur Where ur.userID = Term) as 'percent'
+		FROM movies m, user_ratedmovies ur, movie_genres mg
+        WHERE ur.userID = Term 
+        AND ur.movieID = m.id
+        AND mg.movieID = m.id
+        Group BY mg.genre;
+    ELSEIF(QType="details") THEN
+        SELECT m.title as 'title', (ur.rating) as 'rating', (select count(*) From user_ratedmovies qur Where qur.movieID = ur.movieID and qur.userID = ur.userID) as 'c', CONCAT(ur.date_day, '/', ur.date_month,'/', ur.date_year) as 'date'       
+		FROM movies m, user_ratedmovies ur
+        WHERE ur.userID = Term
+        AND ur.movieID = m.id
+        Group By title;
+    ELSEIF(QType = "recommended") THEN
+        SELECT DISTINCT title, imdbPictureURL
+        FROM movie_tags mt, movies m, tags t
+        WHERE mt.movieID = m.id 
+        AND t.id = mt.tagID
+        AND title != Term
+        AND mvValue in (
+            SELECT mvValue
+            FROM movie_tags mt, movies m, tags t
+            WHERE mt.movieID = m.id 
+            AND t.id = mt.tagID 
+            AND title = Term
+        )  
+		ORDER BY `m`.`rtAudienceScore`  DESC, tagWeight  DESC
+        LIMIT 5;
+    END IF;
+   END$$
+DELIMITER ;

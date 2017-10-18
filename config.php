@@ -1,16 +1,14 @@
 <?php
 
 //Set Debug On
-/*
+
   error_reporting(E_ALL);
   ini_set('display_errors', 1);
-  */
+  
 
 //Creating Conf Class to be used for database connection
 class Conf
 {
- const DEF_APP = 'Test Application';
-
  const DB_HOST = 'localhost';
  const DB_NAME   = 'moviedatabase';
  const DB_USERNAME = 'davidcurbina';

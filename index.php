@@ -1,3 +1,5 @@
+<!DOCTYPE html>
+<?php ob_start('index_buffer'); ?>
 <html>
 <head>
     <title>
@@ -98,13 +100,11 @@
             <div class="tab-pane fade in" id="tab5">
                 <div class="container">
                     <?php
-                        $servername = "localhost:8889";
-                        $username = "admin";
-                        $password = "admin";
-                        $database = "moviedatabase";
 
+                      require_once('config.php');
                         // Create connection
-                        $mysqli = new mysqli($servername, $username, $password,$database);
+                       
+                        $mysqli = new mysqli(Conf::DB_HOST, Conf::DB_USERNAME, Conf::DB_PASSWORD,Conf::DB_NAME);
                         mysqli_set_charset( $mysqli, 'utf8');
                         // Check connection
                         if ($mysqli->connect_error) {
@@ -137,3 +137,4 @@
      </div>
 </body>
 </html>
+<?php ob_end_flush(); ?>

@@ -20,19 +20,12 @@
     function resetVideoHeight() {
         $(".video").css("height", $("#results").width() * 9/16);
     }
-</script>
+</script>  
 <?php
-    $servername = "localhost:8889";
-    $username = "admin";
-    $password = "admin";
-    $database = "moviedatabase";
-
-    ini_set('display_errors', 1);
-    ini_set('display_startup_errors', 1);
-    error_reporting(E_ALL);
+    require_once('Database.php');
 
     // Create connection
-    $mysqli = new mysqli($servername, $username, $password,$database);
+    $mysqli = new mysqli(Conf::DB_HOST, Conf::DB_USERNAME, Conf::DB_PASSWORD,Conf::DB_NAME);
     mysqli_set_charset( $mysqli, 'utf8');
     // Check connection
     if ($mysqli->connect_error) {
@@ -49,9 +42,9 @@
     $qmin = $_GET["qmin"];
     if($var == "popular" || $var == "genre"){
         if($var == "popular"){
-            $results = $mysqli->query("CALL GetResults('".$var."',".$count.",NULL,NULL);");
+            $results = Database::query("CALL GetResults('". $var."',".$count.",NULL,NULL);");
         } else {
-            $results = $mysqli->query("CALL GetResults('".$var."',".$count.",'".$term."',NULL);");
+            $results = Database::query("CALL GetResults('".$var."',".$count.",'".$term."',NULL);");
             echo "<h2 id=\"resultText\" style=\"width:100%;float:right\">Results for ".$term."</h2>";
         }
         while ($row = $results->fetch_assoc()) {
@@ -79,7 +72,8 @@
         if($qmin == ""){
             $qmin = "NULL";
         }
-        $results = $mysqli->query("CALL GetResults('".$var."',".$count.",'".$term."',".$qmin.");");
+        $results = Database::query("CALL GetResults('".$var."',".$count.",'".$term."',".$qmin.");");
+      
         if($var == "title" || $var=="director" || $var=="actor" || $var=="tag"){
             echo "<h2>Results for ".$term."</h2>";
             $video = 0;
@@ -87,7 +81,6 @@
                 $video++;
                 echo "<div class=\"row\" style=\"margin-bottom:10px;background:white;width:100%\">";
 
-                $mysqli2 = new mysqli($servername, $username, $password,$database);
                     echo"
                     <img src=\"".$row["RTPic"]."\" style=\"width:15%; float:left\"/>
                     <div style=\"float:left; width:60%; padding-left:15px;\">
@@ -97,12 +90,12 @@
                      <h3 style=\"margin-top:0px; margin-right:10px; float:left\">Year:</h3>
                      <h3 style=\"margin-top:0px;color:orangered;font-weight:700\">".$row["Year"]."</h3>
                      <h3 style=\"margin-top:5px; margin-right:10px; float:left\">Audience Score:</h3>
-                     <h1 style=\"margin-top:0px;color:orangered;font-weight:700\">".$row["Audience Score"]."</h1>
+                     <h1 style=\"margin-top:0px;color:orangered;font-weight:700\">".round($row["Audience Score"])."</h1>
                     ";
                 if($var == "title"){
-                    $tagResults = $mysqli2->query("CALL GetResults('tags',NULL,'".$row["Title"]."',NULL);");
+                    $tagResults = Database::query("CALL GetResults('tags',NULL,'".$row["Title"]."',NULL);");
                     if (!$tagResults) {
-                        echo "Error Connecting";
+                        echo "No tags found";
                     }elseif($tagResults->num_rows == 0){
                         echo "No tags found";
                     } else {
@@ -110,7 +103,6 @@
                         while ($tagRow = $tagResults->fetch_assoc()) {
                             echo $tagRow["tag"].", ";
                         }
-                        mysqli_close($mysqli2);
                     }
                      echo"<script type=\"text/javascript\">
                           search('".$row["Title"]." ".$row["Year"]." Official Trailer','video".$video."');
@@ -119,10 +111,9 @@
                             <iframe id=video".$video." width=\"420\" style=\"margin-left:20%;border:0px\" align=\"center\" height=\"315\" src=\"\">
                             </iframe>
                         </div>";
-                    $mysqli2 = new mysqli($servername, $username, $password,$database);
-                    $recommendationResults = $mysqli2->query("CALL GetResults('recommended',NULL,'".$row["Title"]."',NULL);");
+                    $recommendationResults = Database::query("CALL GetResults('recommended',NULL,'".$row["Title"]."',NULL);");
                     if (!$recommendationResults) {
-                        echo "Error Connecting";
+                        echo "No Recommendations found";
                     }elseif($recommendationResults->num_rows == 0){
                         echo "No Recommendations found";
                     } else {
@@ -130,7 +121,6 @@
                         while ($recRow = $recommendationResults->fetch_assoc()) {
                             echo "<a href=\"javascript:;\" onclick= \"searchTerm('".rtrim($recRow["title"])."')\"><img src=\"".$recRow["imdbPictureURL"]."\" style=\"width:20%; float:left\"/></a>";
                         }
-                        mysqli_close($mysqli2);
                     }
                 }
                 echo"
@@ -149,7 +139,7 @@
                 <div style=\"float:left;width:100%\">
                  <h2 style=\"\">".$row["DirectorName"]."</h2>
                  <h4 style=\"margin-top:5px; margin-right:10px; float:left\">Average Audience Score:</h4>
-                 <h2 style=\"margin-top:0px;color:orangered;font-weight:700\">".$row["Avg"]."</h2>
+                 <h2 style=\"margin-top:0px;color:orangered;font-weight:700\">".round($row["Avg"])."</h2>
                 </div>
             </div>";
             }
@@ -162,13 +152,12 @@
                 <div style=\"float:left;width:100%\">
                  <h2 style=\"\">".$row["ActorName"]."</h2>
                  <h4 style=\"margin-top:5px; margin-right:10px; float:left\">Average Audience Score:</h4>
-                 <h2 style=\"margin-top:0px;color:orangered;font-weight:700\">".$row["Avg"]."</h2>
+                 <h2 style=\"margin-top:0px;color:orangered;font-weight:700\">".round($row["Avg"])."</h2>
                 </div>
             </div>";
             }
         } else if($var == "timeline"){
-            $mysqli3 = new mysqli($servername, $username, $password,$database);
-            $summaryResults = $mysqli3->query("CALL GetResults('summary',NULL,'".$term."',NULL);");
+            $summaryResults = Database::query("CALL GetResults('summary',NULL,'".$term."',NULL);");
             echo "
                     <script type=\"text/javascript\">
 
@@ -216,20 +205,20 @@
             } else {
                 echo "<div id=\"chart_div\" style=\"width:70%;margin-left:15%\"></div></br>";
             }
-            
-            while ($row = $results->fetch_assoc()) {
-        echo "<div class=\"container\" style=\"margin-bottom:10px;background:white;width:100%\">
+          Database::close();
+          Database::connect();
+          $detailResults = Database::query("CALL GetResults('details',NULL,".$term.",NULL);");
+           while ($row = $detailResults->fetch_assoc()) {
+            echo "<div class=\"container\" style=\"margin-bottom:10px;background:white;width:100%\">
                 <div style=\"float:left;width:100%\">
-                 <h2 style=\"\">".$row["Title"]."</h2>
-                 <h4 style=\"float:right\">".$row["Date"]."</h4>
+                 <h2 style=\"\">".$row["title"]."</h2>
+                 <h4 style=\"float:right\">".$row["date"]."</h4>
                  <h4 style=\"margin-top:5px; margin-right:10px; float:left\">Rating Given:</h4>
-                 <h2 style=\"margin-top:0px;color:orangered;font-weight:700\">".$row["Rating"]."</h2>
+                 <h2 style=\"margin-top:0px;color:orangered;font-weight:700\">".$row["rating"]."</h2>
                 </div>
             </div>";
             }
         }
     }
-    $results->close();
-    mysqli_close($mysqli);
     ?>
 </div>
